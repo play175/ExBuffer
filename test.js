@@ -10,8 +10,9 @@ var exBuffer = new ExBuffer().ushortHead().bigEndian();
 //只要收到满足的包就会触发事件
 exBuffer.on('data',function(buffer){
     console.log('>> receive data,length:'+buffer.length);
-    console.log(buffer);
+    //console.log(buffer);
 });
+
 
 //传入一个9字节长的数据，分多次put （对应于TCP中的分包的情况）
 exBuffer.put(new Buffer([0,9]));
@@ -20,6 +21,18 @@ exBuffer.put(new Buffer([8,9]));
 
 //传入一个3个字节的数据和一个6个字节的数据，一次put（对应于TCP中的粘包的情况）
 exBuffer.put(new Buffer([0,3,1,2,3,0,6,1,2,3,4,5,6]));
+
+
+//大数据处理测试 (20MB)
+var exBuffer = new ExBuffer().uint32Head().bigEndian();
+exBuffer.on('data',function(buffer){
+    console.log('>> receive data,length:'+buffer.length);
+    console.log(buffer);
+});
+var sbuf = new Buffer(4);
+sbuf.writeUInt32BE(1024*1024*20,0);//写入包长
+exBuffer.put(sbuf);
+exBuffer.put(new Buffer(1024*1024*20));
 
 
 /*************************在socket中的应用****************************/
