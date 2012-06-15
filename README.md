@@ -98,3 +98,9 @@ exBuffer.on('data', function(buffer) {
 });
 
 ```
+
+安装
+
+```javascript
+npm install ExBuffer
+```
