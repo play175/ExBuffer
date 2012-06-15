@@ -65,6 +65,9 @@ var ExBuffer = function (bufferLength) {
             _buffer.copy(tmp);
             _buffer = tmp;
         }
+        if(getLen() == 0){
+            _putOffset = _readOffset = 0;
+        }
         //判断是否会冲破_buffer尾部
         if((_putOffset + len) > _buffer.length){
             //分两次存 一部分存在数据后面 一部分存在数据前面
@@ -126,6 +129,7 @@ var ExBuffer = function (bufferLength) {
                 }
                 _dlen = 0;
                 try{
+                    //console.log(('dlen:'+_dlen+',_putOffset:'+_putOffset + ',readOffset:'+_readOffset+',_buffer.length:'+_buffer.length + ',getLen():'+getLen()));
                     self.emit("data", dbuff);
                 }catch(e){
                     throw new Error(e);
