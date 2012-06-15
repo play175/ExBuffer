@@ -1,0 +1,10 @@
+{
+  "name"          : "ExBuffer",
+  "description"   : "usefull for socket tcp receive data",
+  "homepage"      : "http://play175.github.com/ExBuffer/",
+  "keywords"      : ["Buffer","byte array","tcp","socket"],
+  "author"        : "yoyo <http://yoyo.play175.com>",
+  "repository"    : {"type": "git", "url": "https://github.com/play175/ExBuffer.git"},
+  "main"          : "ExBuffer.js",
+  "version"       : "0.1.0"
+}
