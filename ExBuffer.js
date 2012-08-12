@@ -62,7 +62,18 @@ var ExBuffer = function (bufferLength) {
         if(len + getLen() > _buffer.length){
             var ex = Math.ceil((len + getLen())/(1024));//每次扩展1kb
             var tmp = new Buffer(ex * 1024);
+            var exlen = tmp.length - _buffer.length;
             _buffer.copy(tmp);
+            if (_putOffset < _readOffset) {
+                if (_putOffset <= exlen) {
+                    tmp.copy(tmp, _buffer.length, 0, _putOffset);
+                    _putOffset += _buffer.length;
+                } else {
+                    tmp.copy(tmp, _buffer.length, 0, exlen);
+                    tmp.copy(tmp, 0, _putOffset - exlen, _putOffset);
+                    _putOffset -= exlen;
+                }
+            }
             _buffer = tmp;
         }
         if(getLen() == 0){
@@ -72,8 +83,10 @@ var ExBuffer = function (bufferLength) {
         if((_putOffset + len) > _buffer.length){
             //分两次存 一部分存在数据后面 一部分存在数据前面
             var len1 = _buffer.length - _putOffset;
-            buffer.copy(_buffer,_putOffset,offset,offset + len1);
-            offset += len1;    
+            if (len1 > 0) {
+                buffer.copy(_buffer,_putOffset,offset,offset + len1);
+                offset += len1;
+            }
             
             var len2 = len - len1;
             buffer.copy(_buffer,0,offset,offset + len2);
@@ -111,6 +124,7 @@ var ExBuffer = function (bufferLength) {
                     for(var i = 0;i<(_headLen - rlen);i++){
                         hbuf[i] = _buffer[_readOffset++];
                     }
+                    _dlen = hbuf['readUInt' + (8*_headLen) + ''+ _endian +'E'](0);
                 }
             }
 
@@ -120,19 +134,24 @@ var ExBuffer = function (bufferLength) {
                 var dbuff = new Buffer(_dlen);
                 if(_readOffset + _dlen > _buffer.length){
                     var len1 = _buffer.length - _readOffset;
-                    _buffer.copy(dbuff,0,_readOffset,_readOffset + len1);
+                    if (len1 > 0) {
+                        _buffer.copy(dbuff,0,_readOffset,_readOffset + len1);
+                    }
+
                     _readOffset = 0;
                     var len2 = _dlen - len1;
                     _buffer.copy(dbuff,len1,_readOffset,_readOffset += len2);
                 }else {
                     _buffer.copy(dbuff,0,_readOffset,_readOffset += _dlen);
                 }
-                _dlen = 0;
-                try{
-                    //console.log(('dlen:'+_dlen+',_putOffset:'+_putOffset + ',readOffset:'+_readOffset+',_buffer.length:'+_buffer.length + ',getLen():'+getLen()));
+                try {
+                    _dlen = 0;
                     self.emit("data", dbuff);
-                }catch(e){
-                    throw new Error(e);
+                    if (_readOffset === _putOffset) {
+                        break;
+                    }
+                } catch(e) {
+                    self.emit("error", e);
                 }
             }else {
                 break;
