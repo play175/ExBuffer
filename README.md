@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/play175/ExBuffer.png)](http://travis-ci.org/play175/ExBuffer)
 ExBuffer，NodeJs的TCP中的粘包、分包问题的解决方案！
 
 推荐结合ByteBuffer来做通信协议！https://github.com/play175/ByteBuffer
