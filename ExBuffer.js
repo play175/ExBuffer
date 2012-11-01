@@ -64,13 +64,15 @@ var ExBuffer = function (bufferLength) {
             var tmp = new Buffer(ex * 1024);
             var exlen = tmp.length - _buffer.length;
             _buffer.copy(tmp);
+            //fix bug : superzheng
             if (_putOffset < _readOffset) {
                 if (_putOffset <= exlen) {
                     tmp.copy(tmp, _buffer.length, 0, _putOffset);
                     _putOffset += _buffer.length;
                 } else {
+                    //fix bug : superzheng
                     tmp.copy(tmp, _buffer.length, 0, exlen);
-                    tmp.copy(tmp, 0, _putOffset - exlen, _putOffset);
+                    tmp.copy(tmp, 0, exlen, _putOffset);
                     _putOffset -= exlen;
                 }
             }
