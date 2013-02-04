@@ -124,7 +124,7 @@ var ExBuffer = function (bufferLength) {
                     }
                     _readOffset = 0;
                     for(var i = 0;i<(_headLen - rlen);i++){
-                        hbuf[i] = _buffer[_readOffset++];
+                        hbuf[rlen+i] = _buffer[_readOffset++];
                     }
                     _dlen = hbuf['readUInt' + (8*_headLen) + ''+ _endian +'E'](0);
                 }
