@@ -6,5 +6,5 @@
   "author"        : "yoyo <http://yoyo.play175.com>",
   "repository"    : {"type": "git", "url": "https://github.com/play175/ExBuffer.git"},
   "main"          : "ExBuffer.js",
-  "version"       : "0.2.1"
+  "version"       : "0.2.2"
 }
