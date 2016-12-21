@@ -3,7 +3,6 @@
  * yoyo 2012 https://github.com/play175/ExBuffer
  * new BSD Licensed
  */
-var util = require(process.binding('natives').util ? 'util': 'sys');
 
 /*
 * 构造方法
@@ -11,19 +10,21 @@ var util = require(process.binding('natives').util ? 'util': 'sys');
 */
 var ExBuffer = function (bufferLength) {
 	var self = this;
-    process.EventEmitter.call(this);//继承事件类
     var _headLen = 2;
     var _endian = 'B';
     var _buffer = new Buffer(bufferLength || 512);//Buffer大于8kb 会使用slowBuffer，效率低
     var _readOffset = 0;
     var _putOffset = 0;
     var _dlen = 0;
+	var slice = Array.prototype.slice;
+    var _readMethod = 'readUInt16BE';
 
     /*
     * 指定包长是uint32型(默认是ushort型)
     */
     this.uint32Head = function(){
         _headLen = 4;
+       _readMethod = 'readUInt' + (8*_headLen) + ''+ _endian +'E';
         return this;
     };
 
@@ -32,6 +33,7 @@ var ExBuffer = function (bufferLength) {
     */
     this.ushortHead = function(){
         _headLen = 2;
+       _readMethod = 'readUInt' + (8*_headLen) + ''+ _endian +'E';
         return this;
     };
 
@@ -40,6 +42,7 @@ var ExBuffer = function (bufferLength) {
     */
     this.littleEndian = function(){
        _endian = 'L';
+       _readMethod = 'readUInt' + (8*_headLen) + ''+ _endian +'E';
         return this;
     };
 
@@ -48,11 +51,60 @@ var ExBuffer = function (bufferLength) {
     */
     this.bigEndian = function(){
        _endian = 'B';
+       _readMethod = 'readUInt' + (8*_headLen) + ''+ _endian +'E';
         return this;
     };
 
+    this.once = function(e,cb){
+        if(!this.listeners_once)this.listeners_once = {};
+        this.listeners_once[e] = this.listeners_once[e] || [];
+        if(this.listeners_once[e].indexOf(cb) == -1)this.listeners_once[e].push(cb);
+    };
+
+    this.on = function(e,cb){
+        if(!this.listeners)this.listeners = {};
+        this.listeners[e] = this.listeners[e] || [];
+        if(this.listeners[e].indexOf(cb) == -1)this.listeners[e].push(cb);
+    };
+
+    this.off = function(e,cb){
+        var index = -1;
+        if(this.listeners && this.listeners[e] && (index = this.listeners[e].indexOf(cb)) != -1)
+            this.listeners[e].splice(index);
+    };
+    
+    this.emit = function(e){
+        var other_parameters = slice.call(arguments, 1);
+        if(this.listeners) {
+            var list = this.listeners[e];
+            if(list) {
+                for(var i=0;i<list.length;++i) {
+                    // try{
+                         list[i].apply(this,other_parameters);
+                    // }catch(e){
+                    //     alert(e.stack);
+                    // }
+                }
+            }
+        }
+
+        if(this.listeners_once) {
+            var list = this.listeners_once[e];
+            delete this.listeners_once[e];
+            if(list) {
+                for(var i=0;i<list.length;++i) {
+                    // try{
+                         list[i].apply(this,other_parameters);
+                    // }catch(e){
+                    //     alert(e.stack);
+                    // }
+                }
+            }
+        }
+    };
+
      /*
-    * 送入一端Buffer
+    * 送入一段Buffer
     */
     this.put = function(buffer,offset,len){
         if(offset == undefined)offset = 0;
@@ -97,10 +149,7 @@ var ExBuffer = function (bufferLength) {
             buffer.copy(_buffer,_putOffset,offset,offset + len);
             _putOffset += len;
         }
-        proc();
-    };
-
-    function proc() {
+        
         var count = 0;
         while(true){
             //console.log('_readOffset:'+_readOffset);
@@ -113,7 +162,7 @@ var ExBuffer = function (bufferLength) {
                     break;//连包头都读不了
                 }
                 if(_buffer.length - _readOffset >= _headLen){
-                    _dlen = _buffer['readUInt' + (8*_headLen) + ''+ _endian +'E'](_readOffset);
+                    _dlen = _buffer[_readMethod](_readOffset);
                     _readOffset += _headLen;
                 }else {//
                     var hbuf = new Buffer(_headLen);
@@ -126,7 +175,7 @@ var ExBuffer = function (bufferLength) {
                     for(var i = 0;i<(_headLen - rlen);i++){
                         hbuf[rlen+i] = _buffer[_readOffset++];
                     }
-                    _dlen = hbuf['readUInt' + (8*_headLen) + ''+ _endian +'E'](0);
+                    _dlen = hbuf[_readMethod](0);
                 }
             }
 
@@ -159,7 +208,9 @@ var ExBuffer = function (bufferLength) {
                 break;
             }
         }
-    }
+
+    };
+
     
     //获取现在的数据长度
     function getLen() {
@@ -169,8 +220,6 @@ var ExBuffer = function (bufferLength) {
         return _buffer.length - _readOffset + _putOffset; //***-------*********
     }
 };
-
-util.inherits(ExBuffer, process.EventEmitter);//继承事件类
 
 module.exports = exports = ExBuffer;
 
