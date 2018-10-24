@@ -110,8 +110,8 @@ var ExBuffer = function (bufferLength) {
         if(offset == undefined)offset = 0;
         if(len == undefined)len = buffer.length - offset;
         //buf.copy(targetBuffer, [targetStart], [sourceStart], [sourceEnd])
-        //当前缓冲区已经不能满足次数数据了
-        if(len + getLen() > _buffer.length){
+        //当前缓冲区已经不能满足次数数据了,这里我们保证尾部至少有一个位置永远空余，避免读写指针重叠
+        if(len + getLen() > _buffer.length - 1){
             var ex = Math.ceil((len + getLen())/(1024));//每次扩展1kb
             var tmp = new Buffer(ex * 1024);
             var exlen = tmp.length - _buffer.length;
